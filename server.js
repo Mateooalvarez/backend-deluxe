@@ -1,42 +1,35 @@
 const express = require('express');
-const cors = require('cors');
-const app = express();
-const port = 5000;
+const router = express.Router();
+const User = require('./models/User'); // Ajustá el path si es diferente
 
-app.use(cors()); // Permite solicitudes desde el frontend
-app.use(express.json()); // Permite manejar datos JSON
+// Ruta de login
+router.post('/login', async (req, res) => {
+  const { email, password } = req.body;
 
-let reservas = [
-  { _id: 1, nombre: "Juan", fecha: "10/06/2025", hora: "10:00", cancha: 1 },
-  { _id: 2, nombre: "Maria", fecha: "10/06/2025", hora: "12:00", cancha: 2 }
-];
+  console.log('Datos recibidos en login:', req.body);
 
-// Ruta para obtener todas las reservas
-app.get('/api/reservas', (req, res) => {
-  res.json(reservas);
+  try {
+    const user = await User.findOne({ email });
+    console.log('Usuario encontrado:', user);
+
+    if (!user || user.password !== password) {
+      return res.status(400).json({ message: 'Correo o contraseña incorrectos' });
+    }
+
+    // 🔐 Simulamos un token, ya que no estás usando JWT aún
+    const fakeToken = '123abc456fake';
+
+    // Respondemos con lo que espera el frontend
+    res.status(200).json({
+      name: user.name,
+      email: user.email,
+      _id: user._id,
+      token: fakeToken
+    });
+  } catch (error) {
+    console.error('Error al iniciar sesión:', error);
+    res.status(500).json({ message: 'Error del servidor' });
+  }
 });
 
-// Ruta para crear una nueva reserva
-app.post('/api/reservas', (req, res) => {
-  const { nombre, fecha, hora, cancha } = req.body;
-  const nuevaReserva = {
-    _id: reservas.length + 1,
-    nombre,
-    fecha,
-    hora,
-    cancha
-  };
-  reservas.push(nuevaReserva);
-  res.status(201).json(nuevaReserva);
-});
-
-// Ruta para cancelar una reserva
-app.delete('/api/reservas/:id', (req, res) => {
-  const { id } = req.params;
-  reservas = reservas.filter(reserva => reserva._id !== parseInt(id));
-  res.status(200).json({ message: 'Reserva cancelada con éxito' });
-});
-
-app.listen(port, () => {
-  console.log(`Servidor corriendo en http://localhost:${port}`);
-});
+module.exports = router;
