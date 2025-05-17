@@ -8,31 +8,21 @@ router.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
 
   try {
-    // Verificar si el correo ya está registrado
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'El correo ya está registrado' });
     }
 
-    // Encriptar la contraseña
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const newUser = new User({ name, email, password }); // ❌ No hasheamos acá
 
-    // Crear nuevo usuario
-    const newUser = new User({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    await newUser.save();
+    await newUser.save(); // 🔒 Se hashea automáticamente en el middleware del modelo
 
     res.status(201).json({
       message: 'Usuario registrado correctamente',
       name: newUser.name,
       email: newUser.email,
       _id: newUser._id,
-      token: 'mock-token' // Luego podés reemplazar esto con un JWT real
+      token: 'mock-token'
     });
   } catch (error) {
     console.error('Error al registrar usuario:', error);

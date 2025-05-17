@@ -1,35 +1,29 @@
 const express = require('express');
-const router = express.Router();
-const User = require('./models/User'); // Ajustá el path si es diferente
+const mongoose = require('mongoose');
+const cors = require('cors');
 
-// Ruta de login
-router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+const app = express();
 
-  console.log('Datos recibidos en login:', req.body);
+// Middleware para que Express pueda parsear JSON
+app.use(express.json());
 
-  try {
-    const user = await User.findOne({ email });
-    console.log('Usuario encontrado:', user);
+// CORS para permitir solicitudes desde el frontend
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST'],
+  credentials: true
+}));
 
-    if (!user || user.password !== password) {
-      return res.status(400).json({ message: 'Correo o contraseña incorrectos' });
-    }
+// Rutas
+const authRoutes = require('./routes/auth');
+app.use('/api', authRoutes);
 
-    // 🔐 Simulamos un token, ya que no estás usando JWT aún
-    const fakeToken = '123abc456fake';
-
-    // Respondemos con lo que espera el frontend
-    res.status(200).json({
-      name: user.name,
-      email: user.email,
-      _id: user._id,
-      token: fakeToken
+// Conexión a MongoDB
+mongoose.connect('mongodb://127.0.0.1:27017/padel')
+  .then(() => {
+    console.log('Conectado a MongoDB');
+    app.listen(5000, () => {
+      console.log('Servidor corriendo en http://localhost:5000');
     });
-  } catch (error) {
-    console.error('Error al iniciar sesión:', error);
-    res.status(500).json({ message: 'Error del servidor' });
-  }
-});
-
-module.exports = router;
+  })
+  .catch((err) => console.error('Error al conectar a MongoDB:', err));
