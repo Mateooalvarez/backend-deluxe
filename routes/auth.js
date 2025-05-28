@@ -34,11 +34,8 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  console.log('Datos recibidos en login:', req.body);
-
   try {
     const user = await User.findOne({ email });
-    console.log('Usuario encontrado:', user);
 
     if (!user) {
       return res.status(400).json({ message: 'Correo o contraseña incorrectos' });
@@ -46,16 +43,27 @@ router.post('/login', async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      console.log('Contraseña incorrecta');
       return res.status(400).json({ message: 'Correo o contraseña incorrectos' });
     }
+
+    // Crear token JWT con id, email y role
+    const token = jwt.sign(
+      {
+        id: user._id,
+        email: user.email,
+        role: user.role || "usuario"  // Por defecto "usuario"
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
     res.status(200).json({
       message: 'Inicio de sesión exitoso',
       name: user.name,
       email: user.email,
       _id: user._id,
-      token: 'mock-token'
+      role: user.role,
+      token
     });
 
   } catch (error) {
