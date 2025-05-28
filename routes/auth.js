@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken'); // ⬅️ Faltaba este import
 
 // Ruta de registro
 router.post('/register', async (req, res) => {
@@ -13,17 +14,28 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'El correo ya está registrado' });
     }
 
-    const newUser = new User({ name, email, password }); // ❌ No hasheamos acá
+    const newUser = new User({ name, email, password }); // 🔒 Password se hashea en el modelo
+    await newUser.save();
 
-    await newUser.save(); // 🔒 Se hashea automáticamente en el middleware del modelo
+    const token = jwt.sign(
+      {
+        id: newUser._id,
+        email: newUser.email,
+        role: newUser.role || "usuario"
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
     res.status(201).json({
       message: 'Usuario registrado correctamente',
       name: newUser.name,
       email: newUser.email,
       _id: newUser._id,
-      token: 'mock-token'
+      role: newUser.role || "usuario",
+      token
     });
+
   } catch (error) {
     console.error('Error al registrar usuario:', error);
     res.status(500).json({ message: 'Error del servidor' });
@@ -46,12 +58,11 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Correo o contraseña incorrectos' });
     }
 
-    // Crear token JWT con id, email y role
     const token = jwt.sign(
       {
         id: user._id,
         email: user.email,
-        role: user.role || "usuario"  // Por defecto "usuario"
+        role: user.role || "usuario"
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
