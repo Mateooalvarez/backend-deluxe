@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-let reservas = []; // Esto es temporal, después podés usar una base de datos
+let reservas = []; // Aún usamos array temporal
 
 // Crear una nueva reserva
 router.post('/', (req, res) => {
@@ -20,7 +20,15 @@ router.post('/', (req, res) => {
     return res.status(409).json({ mensaje: 'Ya hay una reserva en ese horario para esa cancha' });
   }
 
-  const nuevaReserva = { nombre, fecha, hora, cancha };
+  const nuevaReserva = {
+    id: Date.now().toString(),
+    nombre,
+    fecha,
+    hora,
+    cancha,
+    estado: "Reservado",
+  };
+
   reservas.push(nuevaReserva);
   res.status(201).json({ mensaje: 'Reserva creada con éxito', reserva: nuevaReserva });
 });
@@ -30,10 +38,17 @@ router.get('/', (req, res) => {
   res.json(reservas);
 });
 
-// Eliminar una reserva por ID (esto es temporal porque no usás una base de datos real)
+// Eliminar una reserva por ID
 router.delete('/:id', (req, res) => {
   const { id } = req.params;
-  reservas = reservas.filter((_, index) => index.toString() !== id);
+  const cantidadAntes = reservas.length;
+  reservas = reservas.filter((r) => r.id !== id);
+  const cantidadDespues = reservas.length;
+
+  if (cantidadAntes === cantidadDespues) {
+    return res.status(404).json({ mensaje: 'Reserva no encontrada' });
+  }
+
   res.json({ mensaje: 'Reserva eliminada' });
 });
 

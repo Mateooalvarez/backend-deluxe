@@ -1,17 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config(); // 👈 Importante para leer el .env
+require('dotenv').config();
 
 const app = express();
 
-// Middleware para parsear JSON
+// Middleware
 app.use(express.json());
 
-// CORS para permitir solicitudes desde tu frontend en producción
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://deluxe-padel.netlify.app'],
-  methods: ['GET', 'POST'],
+  origin: ['https://deluxe-padel.netlify.app'],
+  methods: ['GET', 'POST', 'DELETE'],
   credentials: true
 }));
 
@@ -19,7 +18,10 @@ app.use(cors({
 const authRoutes = require('./routes/auth');
 app.use('/api', authRoutes);
 
-// Conexión a MongoDB Atlas usando variable de entorno
+const reservaRoutes = require('./routes/reservas'); // ✅ IMPORTANTE
+app.use('/api/reservas', reservaRoutes); // ✅ IMPORTANTE
+
+// Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ Conectado a MongoDB Atlas');
