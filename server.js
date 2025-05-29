@@ -8,20 +8,21 @@ const app = express();
 // Middleware
 app.use(express.json());
 
+// Configurar CORS para tu frontend (Netlify)
 app.use(cors({
   origin: ['https://deluxe-padel.netlify.app'],
   methods: ['GET', 'POST', 'DELETE'],
   credentials: true
 }));
 
-// Rutas
+// Importar rutas
 const authRoutes = require('./routes/auth');
 app.use('/api', authRoutes);
 
-const reservaRoutes = require('./routes/reservas'); // ✅ IMPORTANTE
-app.use('/api/reservas', reservaRoutes); // ✅ IMPORTANTE
+const reservaRoutes = require('./routes/reservas');
+app.use('/api/reservas', reservaRoutes);
 
-// Conexión a MongoDB
+// Conectar a MongoDB
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ Conectado a MongoDB Atlas');

@@ -1,56 +1,53 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+const express = require('express');
+const router = express.Router();
+const Reserva = require('../models/Reserva');
 
-const ReservasAdmin = () => {
-  const { user } = useAuth();
-  const [reservas, setReservas] = useState([]);
-  const API_URL = import.meta.env.VITE_API_URL;
+// Crear reserva
+router.post('/', async (req, res) => {
+  const { nombre, fecha, hora, cancha } = req.body;
 
-  useEffect(() => {
-    if (user?.role === "dueño") {
-      axios
-        .get(`${API_URL}/reservas`)
-        .then((res) => setReservas(res.data))
-        .catch((err) => console.error("Error al cargar reservas:", err));
-    }
-  }, [user]);
-
-  if (!user || user.role !== "dueño") {
-    return <p>No tenés permisos para ver esta sección.</p>;
+  if (!nombre || !fecha || !hora || !cancha) {
+    return res.status(400).json({ mensaje: 'Faltan datos para la reserva' });
   }
 
-  return (
-    <div style={{ padding: "20px" }}>
-      <h2>Reservas registradas</h2>
-      {reservas.length === 0 ? (
-        <p>No hay reservas cargadas.</p>
-      ) : (
-        <table border="1" cellPadding="8" cellSpacing="0">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Cancha</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservas.map((r) => (
-              <tr key={r.id}>
-                <td>{r.nombre}</td>
-                <td>{r.fecha}</td>
-                <td>{r.hora}</td>
-                <td>{r.cancha}</td>
-                <td>{r.estado}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
-  );
-};
+  try {
+    const existe = await Reserva.findOne({ fecha, hora, cancha });
+    if (existe) {
+      return res.status(409).json({ mensaje: 'Ya hay una reserva en ese horario para esa cancha' });
+    }
 
-export default ReservasAdmin;
+    const nuevaReserva = new Reserva({ nombre, fecha, hora, cancha });
+    await nuevaReserva.save();
+
+    res.status(201).json({ mensaje: 'Reserva creada con éxito', reserva: nuevaReserva });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error en el servidor' });
+  }
+});
+
+// Obtener todas las reservas
+router.get('/', async (req, res) => {
+  try {
+    const reservas = await Reserva.find();
+    res.json(reservas);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error en el servidor' });
+  }
+});
+
+// Eliminar reserva por ID
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const resultado = await Reserva.findByIdAndDelete(id);
+    if (!resultado) {
+      return res.status(404).json({ mensaje: 'Reserva no encontrada' });
+    }
+    res.json({ mensaje: 'Reserva eliminada' });
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error en el servidor' });
+  }
+});
+
+module.exports = router;
