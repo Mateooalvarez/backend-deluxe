@@ -1,55 +1,56 @@
-const express = require('express');
-const router = express.Router();
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
-let reservas = []; // Aún usamos array temporal
+const ReservasAdmin = () => {
+  const { user } = useAuth();
+  const [reservas, setReservas] = useState([]);
+  const API_URL = import.meta.env.VITE_API_URL;
 
-// Crear una nueva reserva
-router.post('/', (req, res) => {
-  const { nombre, fecha, hora, cancha } = req.body;
+  useEffect(() => {
+    if (user?.role === "dueño") {
+      axios
+        .get(`${API_URL}/reservas`)
+        .then((res) => setReservas(res.data))
+        .catch((err) => console.error("Error al cargar reservas:", err));
+    }
+  }, [user]);
 
-  if (!nombre || !fecha || !hora || !cancha) {
-    return res.status(400).json({ mensaje: 'Faltan datos para la reserva' });
+  if (!user || user.role !== "dueño") {
+    return <p>No tenés permisos para ver esta sección.</p>;
   }
 
-  // Validar si ya existe una reserva en esa fecha/hora/cancha
-  const existe = reservas.find(
-    (r) => r.fecha === fecha && r.hora === hora && r.cancha === cancha
+  return (
+    <div style={{ padding: "20px" }}>
+      <h2>Reservas registradas</h2>
+      {reservas.length === 0 ? (
+        <p>No hay reservas cargadas.</p>
+      ) : (
+        <table border="1" cellPadding="8" cellSpacing="0">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Cancha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reservas.map((r) => (
+              <tr key={r.id}>
+                <td>{r.nombre}</td>
+                <td>{r.fecha}</td>
+                <td>{r.hora}</td>
+                <td>{r.cancha}</td>
+                <td>{r.estado}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
+};
 
-  if (existe) {
-    return res.status(409).json({ mensaje: 'Ya hay una reserva en ese horario para esa cancha' });
-  }
-
-  const nuevaReserva = {
-    id: Date.now().toString(),
-    nombre,
-    fecha,
-    hora,
-    cancha,
-    estado: "Reservado",
-  };
-
-  reservas.push(nuevaReserva);
-  res.status(201).json({ mensaje: 'Reserva creada con éxito', reserva: nuevaReserva });
-});
-
-// Obtener todas las reservas
-router.get('/', (req, res) => {
-  res.json(reservas);
-});
-
-// Eliminar una reserva por ID
-router.delete('/:id', (req, res) => {
-  const { id } = req.params;
-  const cantidadAntes = reservas.length;
-  reservas = reservas.filter((r) => r.id !== id);
-  const cantidadDespues = reservas.length;
-
-  if (cantidadAntes === cantidadDespues) {
-    return res.status(404).json({ mensaje: 'Reserva no encontrada' });
-  }
-
-  res.json({ mensaje: 'Reserva eliminada' });
-});
-
-module.exports = router;
+export default ReservasAdmin;
