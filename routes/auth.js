@@ -2,11 +2,11 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken'); // ⬅️ Faltaba este import
+const jwt = require('jsonwebtoken');
 
 // Ruta de registro
 router.post('/register', async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, role } = req.body; // ⬅️ INCLUIMOS el role
 
   try {
     const existingUser = await User.findOne({ email });
@@ -14,14 +14,15 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'El correo ya está registrado' });
     }
 
-    const newUser = new User({ name, email, password }); // 🔒 Password se hashea en el modelo
+    // Guardamos el role si viene, o 'usuario' por defecto
+    const newUser = new User({ name, email, password, role: role || 'usuario' });
     await newUser.save();
 
     const token = jwt.sign(
       {
         id: newUser._id,
         email: newUser.email,
-        role: newUser.role || "usuario"
+        role: newUser.role
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
@@ -32,7 +33,7 @@ router.post('/register', async (req, res) => {
       name: newUser.name,
       email: newUser.email,
       _id: newUser._id,
-      role: newUser.role || "usuario",
+      role: newUser.role,
       token
     });
 
@@ -62,7 +63,7 @@ router.post('/login', async (req, res) => {
       {
         id: user._id,
         email: user.email,
-        role: user.role || "usuario"
+        role: user.role
       },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
