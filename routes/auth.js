@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 // Ruta de registro
 router.post('/register', async (req, res) => {
   const { name, email, password, role } = req.body; // ⬅️ INCLUIMOS el role
+  console.log("🧪 Datos recibidos en /register:", req.body);
 
   try {
     const existingUser = await User.findOne({ email });
