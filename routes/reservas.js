@@ -35,6 +35,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Obtener reservas de un usuario específico
+router.get('/usuario/:nombre', async (req, res) => {
+  try {
+    const reservas = await Reserva.find({ nombre: req.params.nombre });
+    res.json(reservas);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error en el servidor' });
+  }
+});
+
 // Eliminar reserva por ID
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;

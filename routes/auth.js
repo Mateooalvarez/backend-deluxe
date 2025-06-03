@@ -16,7 +16,13 @@ router.post('/register', async (req, res) => {
     }
 
     // Guardamos el role si viene, o 'usuario' por defecto
-    const newUser = new User({ name, email, password, role: role || 'usuario' });
+    const newUser = new User({
+      name,
+      email,
+      password,
+      role: (role && role.trim() !== '') ? role : 'usuario'
+    });
+    console.log("🧾 Usuario que se va a guardar:", newUser);
     await newUser.save();
 
     const token = jwt.sign(
