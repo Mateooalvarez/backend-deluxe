@@ -7,51 +7,43 @@ const jwt = require('jsonwebtoken');
 // Ruta de registro
 router.post('/register', async (req, res) => {
   const { name, email, password, role } = req.body;
-  console.log("🧪 Datos recibidos en /register:", req.body);
-
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      // En vez de error, respondemos con success false
-      return res.status(200).json({ success: false, message: 'El correo ya está registrado' });
+      // Aquí sí status 400 porque es un error (email repetido)
+      return res.status(400).json({ message: 'El correo ya está registrado' });
     }
 
     const newUser = new User({
       name,
       email,
       password,
-      role: (role && role.trim() !== '') ? role : 'usuario'
+      role: role && role.trim() !== '' ? role : 'usuario',
     });
 
-    console.log("🧾 Usuario que se va a guardar:", newUser);
     await newUser.save();
 
     const token = jwt.sign(
-      {
-        id: newUser._id,
-        email: newUser.email,
-        role: newUser.role
-      },
+      { id: newUser._id, email: newUser.email, role: newUser.role },
       process.env.JWT_SECRET,
       { expiresIn: '24h' }
     );
 
-    res.status(201).json({
-      success: true,
+    // Status 201 porque se creó OK
+    return res.status(201).json({
       message: 'Usuario registrado correctamente',
       name: newUser.name,
       email: newUser.email,
       _id: newUser._id,
       role: newUser.role,
-      token
+      token,
     });
-
   } catch (error) {
     console.error('Error al registrar usuario:', error);
-    res.status(500).json({ success: false, message: 'Error del servidor' });
+    return res.status(500).json({ message: 'Error del servidor' });
   }
+  
 });
-
 // Ruta de login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
