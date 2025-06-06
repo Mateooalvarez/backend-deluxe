@@ -6,22 +6,23 @@ const jwt = require('jsonwebtoken');
 
 // Ruta de registro
 router.post('/register', async (req, res) => {
-  const { name, email, password, role } = req.body; // ⬅️ INCLUIMOS el role
+  const { name, email, password, role } = req.body;
   console.log("🧪 Datos recibidos en /register:", req.body);
 
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: 'El correo ya está registrado' });
+      // En vez de error, respondemos con success false
+      return res.status(200).json({ success: false, message: 'El correo ya está registrado' });
     }
 
-    // Guardamos el role si viene, o 'usuario' por defecto
     const newUser = new User({
       name,
       email,
       password,
       role: (role && role.trim() !== '') ? role : 'usuario'
     });
+
     console.log("🧾 Usuario que se va a guardar:", newUser);
     await newUser.save();
 
@@ -36,6 +37,7 @@ router.post('/register', async (req, res) => {
     );
 
     res.status(201).json({
+      success: true,
       message: 'Usuario registrado correctamente',
       name: newUser.name,
       email: newUser.email,
@@ -46,7 +48,7 @@ router.post('/register', async (req, res) => {
 
   } catch (error) {
     console.error('Error al registrar usuario:', error);
-    res.status(500).json({ message: 'Error del servidor' });
+    res.status(500).json({ success: false, message: 'Error del servidor' });
   }
 });
 
