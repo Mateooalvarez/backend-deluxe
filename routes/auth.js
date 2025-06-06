@@ -10,8 +10,8 @@ router.post('/register', async (req, res) => {
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      // Aquí sí status 400 porque es un error (email repetido)
-      return res.status(400).json({ message: 'El correo ya está registrado' });
+      // Email ya registrado
+      return res.status(400).json({ success: false, message: 'El correo ya está registrado' });
     }
 
     const newUser = new User({
@@ -29,8 +29,8 @@ router.post('/register', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    // Status 201 porque se creó OK
     return res.status(201).json({
+      success: true,
       message: 'Usuario registrado correctamente',
       name: newUser.name,
       email: newUser.email,
@@ -40,10 +40,10 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Error al registrar usuario:', error);
-    return res.status(500).json({ message: 'Error del servidor' });
+    return res.status(500).json({ success: false, message: 'Error del servidor' });
   }
-  
 });
+
 // Ruta de login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -52,12 +52,12 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(400).json({ message: 'Correo o contraseña incorrectos' });
+      return res.status(400).json({ success: false, message: 'Correo o contraseña incorrectos' });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Correo o contraseña incorrectos' });
+      return res.status(400).json({ success: false, message: 'Correo o contraseña incorrectos' });
     }
 
     const token = jwt.sign(
@@ -71,6 +71,7 @@ router.post('/login', async (req, res) => {
     );
 
     res.status(200).json({
+      success: true,
       message: 'Inicio de sesión exitoso',
       name: user.name,
       email: user.email,
@@ -81,7 +82,7 @@ router.post('/login', async (req, res) => {
 
   } catch (error) {
     console.error('Error al iniciar sesión:', error);
-    res.status(500).json({ message: 'Error del servidor' });
+    res.status(500).json({ success: false, message: 'Error del servidor' });
   }
 });
 
