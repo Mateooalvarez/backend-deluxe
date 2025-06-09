@@ -5,7 +5,7 @@ const User = require('../models/User');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// Ruta de registro
+// routes/auth.js
 router.post('/register', async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
@@ -14,13 +14,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'El correo ya está registrado' });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
     const newUser = new User({
       name,
       email,
-      password: hashedPassword,
+      password, // se hashea por el middleware
       role: role && role.trim() !== '' ? role : 'usuario',
     });
 
@@ -39,13 +36,13 @@ router.post('/register', async (req, res) => {
       email: newUser.email,
       _id: newUser._id,
       role: newUser.role,
-      token,
+      token
     });
   } catch (error) {
     console.error('Error al registrar usuario:', error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message: "Error al registrar el usuario",
+      message: 'Error al registrar el usuario'
     });
   }
 });
