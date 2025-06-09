@@ -1,3 +1,4 @@
+// auth.routes.js
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
@@ -10,7 +11,6 @@ router.post('/register', async (req, res) => {
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      // Email ya registrado
       return res.status(400).json({ success: false, message: 'El correo ya está registrado' });
     }
 
@@ -40,9 +40,9 @@ router.post('/register', async (req, res) => {
     });
   } catch (error) {
     console.error('Error al registrar usuario:', error);
-    res.status(201).json({
-      message: "Usuario creado correctamente",
-      user: newUser,
+    res.status(500).json({
+      success: false,
+      message: "Error al registrar el usuario",
     });
   }
 });
