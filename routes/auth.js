@@ -14,10 +14,13 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'El correo ya está registrado' });
     }
 
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
     const newUser = new User({
       name,
       email,
-      password,
+      password: hashedPassword,
       role: role && role.trim() !== '' ? role : 'usuario',
     });
 
