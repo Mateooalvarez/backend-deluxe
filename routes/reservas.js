@@ -45,6 +45,22 @@ router.get('/usuario/:nombre', async (req, res) => {
   }
 });
 
+// 🔔 Obtener reservas por fecha y cancha (para filtrar horas reservadas)
+router.get('/disponibles', async (req, res) => {
+  const { fecha, cancha } = req.query;
+
+  if (!fecha || !cancha) {
+    return res.status(400).json({ mensaje: 'Faltan parámetros de fecha o cancha' });
+  }
+
+  try {
+    const reservas = await Reserva.find({ fecha, cancha: Number(cancha) });
+    res.json(reservas);
+  } catch (error) {
+    res.status(500).json({ mensaje: 'Error al obtener reservas del día' });
+  }
+});
+
 // Eliminar reserva por ID
 router.delete('/:id', async (req, res) => {
   const { id } = req.params;
